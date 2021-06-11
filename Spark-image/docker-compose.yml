@@ -1,0 +1,22 @@
+version: '3' 
+services:
+  spark-master:
+    image: spark-master:latest
+    container_name: spark-master
+    ports:
+      - "8080:8080"
+      - "8888:8888"
+      - "7077:7077"
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+      - "PYSPARK_PYTHON=python3"
+    networks:
+      net_pet:
+        ipv4_address: 172.27.1.15
+        
+networks:
+  net_pet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.27.0.0/16
