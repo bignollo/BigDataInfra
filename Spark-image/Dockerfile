@@ -15,8 +15,9 @@ COPY mycert.pem /root/certs/
 ENV INIT_DAEMON_STEP=setup_spark
 ENV PYSPARK_PYTHON=python3
 RUN pip3 install --upgrade pip setuptools wheel notebook findspark
-EXPOSE 8888/tcp
-EXPOSE 8080/tcp
-EXPOSE 7077/tcp
-EXPOSE 6066/tcp
-CMD jupyter notebook --allow-root
+ENV SPARK_MASTER_PORT 7077
+ENV SPARK_MASTER_WEBUI_PORT 8080
+ENV SPARK_MASTER_LOG /spark/logs
+EXPOSE 8080 7077 6066 8888
+CMD ["/bin/bash", "/master.sh"]
+

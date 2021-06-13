@@ -69,9 +69,10 @@ services:
         
   spark-master:
     image: spark-master:latest
-    container_name: spark-master
+    container_name: bignollo/spark-master
     ports:
       - "8080:8080"
+      - "8888:8888"
       - "7077:7077"
     environment:
       - INIT_DAEMON_STEP=setup_spark
@@ -87,7 +88,7 @@ services:
       - spark-master
     ports:
       - "8081:8081"
-      - "8888:8888"
+      - "8889:8888"
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "PYSPARK_PYTHON=python3"
