@@ -14,7 +14,7 @@ services:
     env_file:
       - ./hadoop.env
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.10
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
@@ -27,7 +27,7 @@ services:
     env_file:
       - ./hadoop.env
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.11
   
   resourcemanager:
@@ -39,8 +39,9 @@ services:
     env_file:
       - ./hadoop.env
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.12
+        
   nodemanager1:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
     container_name: nodemanager
@@ -50,7 +51,7 @@ services:
     env_file:
       - ./hadoop.env
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.13
         
   historyserver:
@@ -64,21 +65,22 @@ services:
     env_file:
       - ./hadoop.env
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.14  
         
   spark-master:
-    image: spark-master:latest
-    container_name: bignollo/spark-master
+    image: bignollo/spark-master:latest
+    container_name: spark-master
     ports:
-      - "8080:8080"
-      - "8888:8888"
-      - "7077:7077"
+      - 8080:8080
+      - 8888:8888
+      - 7077:7077
+      - 6066:6066
     environment:
       - INIT_DAEMON_STEP=setup_spark
       - "PYSPARK_PYTHON=python3"
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.15
         
   spark-worker-1:
@@ -87,22 +89,94 @@ services:
     depends_on:
       - spark-master
     ports:
-      - "8081:8081"
-      - "8889:8888"
+      - 8081:8081
+      - 8889:8888
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "PYSPARK_PYTHON=python3"
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.16
+
+  hive-server:
+    image: hive-server:3.1.2
+    container_name: hive
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+    extra_hosts:
+      - "metastore:172.27.1.18"
+    networks:
+      net-bigData:
+        ipv4_address: 172.27.1.17
+      
+  hive-metastore:
+    image: hive-server:3.1.2
+    container_name: metastore
+    hostname: metastore
+    env_file:
+      - ./hadoop-hive.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:9001 hive-metastore-postgresql:5432"
+    ports:
+      - "9083:9083"
+    networks:
+      net-bigData:
+        aliases:
+          - metastore
+        ipv4_address: 172.27.1.18
+      
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:3.1.0
+    container_name: postgresql
+    networks:
+      net-bigData:
+        ipv4_address: 172.27.1.19
+        
+  presto-coordinator:
+    image: shawnzhu/prestodb:0.181
+    container_name: prestocoordinator
+    ports:
+      - "8181:8080"
+    networks:
+      net-bigData:
+        ipv4_address: 172.27.1.20
+        
+         
+  filebrowser: 
+    container_name: hue
+    image: gethue/hue:latest
+    ports:
+      - "8989:8888"
+    env_file:
+      - ./hadoop.env
+    volumes: # HERE
+      - ./hue-overrides.ini:/usr/share/hue/desktop/conf/hue-overrides.ini
+    depends_on:
+      - namenode
+      - hive-server
+    extra_hosts:
+      - "hive:172.27.1.17"
+    networks:
+       net-bigData:
+         ipv4_address: 172.27.1.22
+      
         
   zookeeper:
     image: wurstmeister/zookeeper:3.4.6
+    container_name: zookeeper
     ports:
       - "2181:2181"
     networks:
-      net_pet:
+      net-bigData:
         ipv4_address: 172.27.1.25
+
+        
 
 volumes:
   hadoop_namenode:
@@ -110,7 +184,7 @@ volumes:
   hadoop_historyserver:
         
 networks:
-  net_pet:
+  net-bigData:
     ipam:
       driver: default
       config:
