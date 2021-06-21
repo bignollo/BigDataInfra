@@ -99,7 +99,7 @@ services:
         ipv4_address: 172.27.1.16
 
   hive-server:
-    image: hive-server:3.1.2
+    image: bignollo/hive-server:latest
     container_name: hive
     env_file:
       - ./hadoop-hive.env
@@ -115,7 +115,7 @@ services:
         ipv4_address: 172.27.1.17
       
   hive-metastore:
-    image: hive-server:3.1.2
+    image: bignollo/hive-server:latest
     container_name: metastore
     hostname: metastore
     env_file:
